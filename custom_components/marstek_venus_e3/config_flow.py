@@ -33,8 +33,9 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
         data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
     )
 
-    # Test the connection
-    await coordinator.async_config_entry_first_refresh()
+    # Test the connection by calling the update method directly
+    # (async_config_entry_first_refresh requires a config entry which we don't have yet)
+    await coordinator._async_update_data()
 
     return {"title": f"Marstek Venus E 3.0 ({data[CONF_IP_ADDRESS]})"}
 
