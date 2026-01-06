@@ -1,0 +1,41 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configuration Marstek Venus E 3.0",
+        "description": "Configurez votre batterie Marstek Venus E 3.0",
+        "data": {
+          "ip_address": "Adresse IP",
+          "port": "Port",
+          "scan_interval": "Intervalle de mise à jour (secondes)"
+        },
+        "data_description": {
+          "ip_address": "Adresse IP locale de votre batterie Marstek Venus E 3.0",
+          "port": "Port de communication UDP (par défaut : 30000)",
+          "scan_interval": "Fréquence de récupération des données de la batterie. La valeur par défaut est 60 secondes. ATTENTION : Des valeurs inférieures à 30 secondes peuvent surcharger la batterie et causer des problèmes de communication."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Impossible de se connecter à la batterie. Veuillez vérifier l'adresse IP et la configuration réseau."
+    },
+    "abort": {
+      "already_configured": "Cette batterie est déjà configurée"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options Marstek Venus E 3.0",
+        "data": {
+          "port": "Port",
+          "scan_interval": "Intervalle de mise à jour (secondes)"
+        },
+        "data_description": {
+          "port": "Port de communication UDP (nécessite un redémarrage pour appliquer les changements)",
+          "scan_interval": "Fréquence de récupération des données de la batterie. La valeur par défaut est 60 secondes. ATTENTION : Des valeurs inférieures à 30 secondes peuvent surcharger la batterie et causer des problèmes de communication."
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "Marstek Venus E 3.0",
+  "render_readme": true,
+  "domains": ["sensor"],
+  "iot_class": "Local Polling",
+  "homeassistant": "2024.1.0"
+}

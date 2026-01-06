@@ -1,0 +1,41 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Marstek Venus E 3.0 Setup",
+        "description": "Configure your Marstek Venus E 3.0 battery",
+        "data": {
+          "ip_address": "IP Address",
+          "port": "Port",
+          "scan_interval": "Update interval (seconds)"
+        },
+        "data_description": {
+          "ip_address": "Local IP address of your Marstek Venus E 3.0 battery",
+          "port": "UDP communication port (default: 30000)",
+          "scan_interval": "How often to poll the battery. Default is 60 seconds. WARNING: Values below 30 seconds may overload the battery and cause communication issues."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to the battery. Please check the IP address and network configuration."
+    },
+    "abort": {
+      "already_configured": "This battery is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Marstek Venus E 3.0 Options",
+        "data": {
+          "port": "Port",
+          "scan_interval": "Update interval (seconds)"
+        },
+        "data_description": {
+          "port": "UDP communication port (requires restart to apply changes)",
+          "scan_interval": "How often to poll the battery. Default is 60 seconds. WARNING: Values below 30 seconds may overload the battery and cause communication issues."
+        }
+      }
+    }
+  }
+}

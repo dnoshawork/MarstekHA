@@ -1,0 +1,11 @@
+{
+  "domain": "marstek_venus_e3",
+  "name": "Marstek Venus E 3.0",
+  "codeowners": ["@dnoshawork"],
+  "config_flow": true,
+  "documentation": "https://github.com/dnoshawork/MarstekHA",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/dnoshawork/MarstekHA/issues",
+  "requirements": [],
+  "version": "1.0.0"
+}

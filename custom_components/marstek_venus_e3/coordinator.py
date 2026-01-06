@@ -1,0 +1,229 @@
+"""Data coordinator for Marstek Venus E 3.0."""
+import asyncio
+import json
+import logging
+import socket
+from datetime import timedelta
+from typing import Any
+
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+
+from .const import (
+    DOMAIN,
+    DEFAULT_PORT,
+    DEFAULT_TIMEOUT,
+    DEFAULT_MAX_RETRIES,
+    CMD_GET_MODE,
+    CMD_GET_BAT_STATUS,
+    ES_MODES,
+)
+
+_LOGGER = logging.getLogger(__name__)
+
+
+class MarstekVenusE3Coordinator(DataUpdateCoordinator):
+    """Class to manage fetching Marstek Venus E 3.0 data."""
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        ip_address: str,
+        port: int = DEFAULT_PORT,
+        scan_interval: int = 30,
+    ) -> None:
+        """Initialize the coordinator."""
+        super().__init__(
+            hass,
+            _LOGGER,
+            name=DOMAIN,
+            update_interval=timedelta(seconds=scan_interval),
+        )
+        self.ip_address = ip_address
+        self.port = port
+        self.timeout = DEFAULT_TIMEOUT
+        self.max_retries = DEFAULT_MAX_RETRIES
+
+    async def _async_update_data(self) -> dict[str, Any]:
+        """Fetch data from the battery."""
+        try:
+            # Get ES Mode data
+            es_mode_data = await self._execute_command_with_retry(CMD_GET_MODE)
+
+            # Get Battery Status data
+            bat_status_data = await self._execute_command_with_retry(CMD_GET_BAT_STATUS)
+
+            # Combine and parse the data
+            data = self._parse_data(es_mode_data, bat_status_data)
+
+            return data
+
+        except Exception as err:
+            raise UpdateFailed(f"Error communicating with device: {err}") from err
+
+    async def _execute_command_with_retry(
+        self,
+        command: str,
+        params: dict | None = None,
+    ) -> dict[str, Any]:
+        """Execute a command with retry mechanism (inspired by Jeedom script)."""
+        if params is None:
+            params = {"id": 0}
+
+        request = {
+            "id": 1,
+            "method": command,
+            "params": params,
+        }
+
+        for attempt in range(1, self.max_retries + 1):
+            try:
+                # Progressive timeout: base + (attempt - 1) seconds
+                timeout = self.timeout + (attempt - 1)
+
+                _LOGGER.debug(
+                    "Sending command %s (attempt %d/%d, timeout=%ds)",
+                    command,
+                    attempt,
+                    self.max_retries,
+                    timeout,
+                )
+
+                response = await self._send_udp_command(request, timeout)
+
+                # Check for parse errors that require retry
+                if isinstance(response, dict) and response.get("error"):
+                    error_code = response["error"].get("code", 0)
+                    if error_code == -32700:  # Parse error
+                        _LOGGER.warning(
+                            "Parse error on attempt %d/%d, retrying...",
+                            attempt,
+                            self.max_retries,
+                        )
+                        if attempt < self.max_retries:
+                            # Exponential backoff: 2^attempt seconds
+                            await asyncio.sleep(2 ** attempt)
+                            continue
+
+                # Valid response with result
+                if isinstance(response, dict) and "result" in response:
+                    _LOGGER.debug("Command %s successful on attempt %d", command, attempt)
+                    return response
+
+                # If we're here, response is invalid but not a parse error
+                if attempt < self.max_retries:
+                    _LOGGER.warning(
+                        "Invalid response on attempt %d/%d, retrying...",
+                        attempt,
+                        self.max_retries,
+                    )
+                    await asyncio.sleep(2 ** attempt)
+                    continue
+
+            except (socket.timeout, asyncio.TimeoutError) as err:
+                _LOGGER.warning(
+                    "Timeout on attempt %d/%d: %s",
+                    attempt,
+                    self.max_retries,
+                    err,
+                )
+                if attempt < self.max_retries:
+                    await asyncio.sleep(2 ** attempt)
+                    continue
+                raise UpdateFailed(f"Command {command} failed after {self.max_retries} attempts") from err
+
+            except Exception as err:
+                _LOGGER.error("Unexpected error on attempt %d/%d: %s", attempt, self.max_retries, err)
+                if attempt < self.max_retries:
+                    await asyncio.sleep(2 ** attempt)
+                    continue
+                raise UpdateFailed(f"Command {command} failed: {err}") from err
+
+        raise UpdateFailed(f"Command {command} failed after {self.max_retries} attempts")
+
+    async def _send_udp_command(
+        self,
+        request: dict[str, Any],
+        timeout: float,
+    ) -> dict[str, Any]:
+        """Send UDP command and get response."""
+        loop = asyncio.get_event_loop()
+
+        def _send_and_receive():
+            """Send and receive UDP data (blocking operation)."""
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            try:
+                # Bind to local port to receive response
+                sock.bind(("", self.port))
+                sock.settimeout(timeout)
+
+                # Send request
+                message = json.dumps(request).encode("utf-8")
+                sock.sendto(message, (self.ip_address, self.port))
+
+                # Receive response
+                data, _ = sock.recvfrom(4096)
+                response = json.loads(data.decode("utf-8"))
+
+                return response
+
+            finally:
+                sock.close()
+
+        # Run blocking operation in executor
+        return await loop.run_in_executor(None, _send_and_receive)
+
+    def _parse_data(
+        self,
+        es_mode_data: dict[str, Any],
+        bat_status_data: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Parse the response data into sensor values."""
+        data = {}
+
+        # Parse ES Mode data
+        if "result" in es_mode_data:
+            result = es_mode_data["result"]
+            data["es_mode"] = ES_MODES.get(result.get("mode", 0), "Unknown")
+            data["ongrid_power"] = result.get("ongridPower", 0)
+            data["load_power"] = result.get("loadPower", 0)
+            data["pv_power"] = result.get("pvPower", 0)
+            data["charge_power"] = result.get("chargePower", 0)
+            data["discharge_power"] = result.get("dischargePower", 0)
+
+        # Parse Battery Status data
+        if "result" in bat_status_data:
+            result = bat_status_data["result"]
+            data["soc"] = result.get("soc", 0)
+            data["bat_temp"] = result.get("temp", 0)
+            data["bat_voltage"] = result.get("voltage", 0) / 100  # Convert to V
+            data["bat_current"] = result.get("current", 0) / 100  # Convert to A
+            data["bat_power"] = result.get("power", 0)
+
+        return data
+
+    async def async_set_mode(
+        self,
+        mode: int,
+        charge_power: int = 0,
+        discharge_power: int = 0,
+    ) -> bool:
+        """Set the ES mode of the battery."""
+        try:
+            params = {
+                "id": 0,
+                "mode": mode,
+                "chargePower": charge_power,
+                "dischargePower": discharge_power,
+            }
+
+            response = await self._execute_command_with_retry(
+                "ES.SetMode",
+                params=params,
+            )
+
+            return "result" in response and response["result"].get("success", False)
+
+        except Exception as err:
+            _LOGGER.error("Failed to set mode: %s", err)
+            return False
