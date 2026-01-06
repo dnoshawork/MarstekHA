@@ -1,6 +1,8 @@
 # Marstek Venus E 3.0 - Home Assistant Integration
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
+[![version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/dnoshawork/MarstekHA/releases)
+[![license](https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
 Intégration Home Assistant pour la batterie Marstek Venus E 3.0.
 
@@ -487,6 +489,71 @@ Recherchez les entrées contenant `marstek_venus_e3` pour voir les détails de c
 ## Développement
 
 Cette intégration est basée sur le [script Jeedom original](https://github.com/dnoshawork/MarstekVenusE3.0_For_Jeedom/blob/main/marstek_udp_client_all_v3.py).
+
+### Gestion des versions
+
+Ce projet utilise le [versioning sémantique](https://semver.org/lang/fr/) (Semantic Versioning) avec le format `MAJOR.MINOR.PATCH`:
+
+- **MAJOR** : Changements incompatibles avec les versions précédentes
+- **MINOR** : Nouvelles fonctionnalités rétrocompatibles
+- **PATCH** : Corrections de bugs rétrocompatibles
+
+#### Fichiers de version
+
+- `VERSION` : Fichier contenant le numéro de version actuel
+- `custom_components/marstek_venus_e3/manifest.json` : Manifeste Home Assistant avec la version
+- `CHANGELOG.md` : Historique détaillé des changements
+
+#### Script de gestion de version
+
+Un script Python `bump_version.py` est fourni pour faciliter la mise à jour des versions:
+
+```bash
+# Incrémenter la version patch (1.0.0 -> 1.0.1)
+python bump_version.py patch
+
+# Incrémenter la version minor (1.0.0 -> 1.1.0)
+python bump_version.py minor
+
+# Incrémenter la version major (1.0.0 -> 2.0.0)
+python bump_version.py major
+
+# Définir une version spécifique
+python bump_version.py 1.2.3
+```
+
+Le script met automatiquement à jour:
+- Le fichier `VERSION`
+- Le fichier `manifest.json`
+- Le fichier `CHANGELOG.md` avec une nouvelle section
+
+#### Processus de release
+
+1. Mettez à jour la version avec le script:
+   ```bash
+   python bump_version.py minor
+   ```
+
+2. Éditez `CHANGELOG.md` pour documenter les changements
+
+3. Commitez les changements:
+   ```bash
+   git add -A
+   git commit -m "Bump version to 1.2.0"
+   ```
+
+4. Créez un tag git:
+   ```bash
+   git tag -a v1.2.0 -m "Release v1.2.0"
+   ```
+
+5. Poussez les changements et le tag:
+   ```bash
+   git push
+   git push --tags
+   ```
+
+6. HACS détectera automatiquement la nouvelle version via le tag git
 
 ## Support
 
