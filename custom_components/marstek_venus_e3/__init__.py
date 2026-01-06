@@ -54,6 +54,8 @@ SERVICE_SET_MODE_SCHEMA = vol.Schema(
         vol.Optional("week_set", default=127): vol.All(int, vol.Range(min=0, max=127)),
         vol.Optional("power", default=0): vol.All(int, vol.Range(min=-3000, max=3000)),
         vol.Optional("enable", default=1): vol.All(int, vol.Range(min=0, max=1)),
+        vol.Optional("time_num", default=1): vol.All(int, vol.Range(min=0, max=9)),
+        vol.Optional("cd_time"): vol.All(int, vol.Range(min=0, max=86400)),  # Duration in seconds (0-24h)
     }
 )
 
@@ -112,6 +114,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         power = call.data.get("power", 0)
         enable = call.data.get("enable", 1)
+        time_num = call.data.get("time_num", 1)
+        cd_time = call.data.get("cd_time")
 
         # Find the coordinator for this device
         device_registry = dr.async_get(hass)
@@ -142,6 +146,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             week_set=week_set,
             power=power,
             enable=enable,
+            time_num=time_num,
+            cd_time=cd_time,
         )
 
         if success:

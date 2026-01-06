@@ -177,7 +177,7 @@ L'intégration permet de contrôler le mode de fonctionnement de la batterie via
 | **Manuel** | 2 | Contrôle manuel de la charge et décharge avec puissances définies |
 | **Passif** | 3 | Mode passif sans gestion active |
 
-⚠️ **Avertissement sur le mode Passif** : Selon la documentation constructeur, le mode Passif devrait rendre la batterie complètement inopérante (pas de charge ni de décharge, quel que soit le SOC). Cependant, dans la pratique, **ce mode ne semble pas fonctionner comme décrit**. La batterie peut continuer à charger ou décharger malgré l'activation de ce mode. Utilisez ce mode avec précaution et vérifiez le comportement réel de votre batterie.
+⚠️ **Avertissement sur le mode Passif** : Selon la documentation constructeur, le mode Passif devrait permettre à la batterie de fonctionner normalement. Cependant, dans la pratique, **ce mode ne semble pas fonctionner comme décrit**. La batterie devient complètement inopérante (pas de charge ni de décharge, quel que soit le SOC) lorsqu'elle est en mode Passif. Utilisez ce mode avec précaution et vérifiez le comportement réel de votre batterie.
 
 ### Service : Définir le mode
 
@@ -190,6 +190,85 @@ L'intégration permet de contrôler le mode de fonctionnement de la batterie via
 5. Pour le mode Manuel : définissez les plages horaires, la puissance et les jours actifs
 6. Cliquez sur **Appeler le service**
 
+#### Support des plages horaires multiples (Nouveau !)
+
+L'intégration supporte désormais **jusqu'à 10 plages horaires indépendantes** en mode Manuel !
+
+**Fonctionnement :**
+- Chaque plage horaire est identifiée par un numéro (`time_num`) de 0 à 9
+- Vous pouvez configurer plusieurs plages avec des paramètres différents
+- Chaque plage peut avoir ses propres horaires, jours, puissance et état d'activation
+
+**Exemple : Configuration de 3 plages horaires différentes**
+
+```yaml
+# Plage 0 : Charge le matin en semaine
+service: marstek_venus_e3.set_mode
+data:
+  device_id: <votre_device_id>
+  mode: "2"
+  time_num: 0
+  start_time: "08:00"
+  end_time: "12:00"
+  days:
+    - monday
+    - tuesday
+    - wednesday
+    - thursday
+    - friday
+  power: -1000  # Charge à 1000W (négatif)
+  enable: 1
+
+# Plage 1 : Décharge le soir en semaine
+service: marstek_venus_e3.set_mode
+data:
+  device_id: <votre_device_id>
+  mode: "2"
+  time_num: 1
+  start_time: "17:00"
+  end_time: "22:00"
+  days:
+    - monday
+    - tuesday
+    - wednesday
+    - thursday
+    - friday
+  power: 2000  # Décharge à 2000W (positif)
+  enable: 1
+
+# Plage 2 : Charge le week-end toute la journée
+service: marstek_venus_e3.set_mode
+data:
+  device_id: <votre_device_id>
+  mode: "2"
+  time_num: 2
+  start_time: "09:00"
+  end_time: "18:00"
+  days:
+    - saturday
+    - sunday
+  power: -1500  # Charge à 1500W (négatif)
+  enable: 1
+```
+
+**Désactiver une plage horaire sans la supprimer :**
+
+```yaml
+service: marstek_venus_e3.set_mode
+data:
+  device_id: <votre_device_id>
+  mode: "2"
+  time_num: 0
+  enable: 0
+```
+
+**Compatibilité :**
+- Le paramètre `time_num` est optionnel et vaut **1 par défaut** (comportement précédent)
+- Les configurations existantes continuent de fonctionner sans modification
+- Vous pouvez configurer jusqu'à **10 plages horaires différentes** (0 à 9)
+
+⚠️ **Important :** Chaque appel au service configure une seule plage horaire. Pour configurer plusieurs plages, appelez le service plusieurs fois avec des `time_num` différents.
+
 #### Paramètres du mode Manuel
 
 Le mode Manuel utilise des plages horaires gérées **directement par la batterie** :
@@ -201,8 +280,8 @@ Le mode Manuel utilise des plages horaires gérées **directement par la batteri
   - Valeur par défaut : `monday` à `friday` (jours de semaine)
   - Alternative obsolète : `week_set` (bitmap 0-127) - conservé pour compatibilité
 - **power** : Puissance en watts
-  - Valeur positive = charge
-  - Valeur négative = décharge
+  - Valeur négative = charge
+  - Valeur positive = décharge
 - **enable** : Activer la plage (1 = activé, 0 = désactivé)
 
 #### Exemples YAML
@@ -223,6 +302,26 @@ data:
   mode: "1"
 ```
 
+**Passer en mode Passif :**
+```yaml
+service: marstek_venus_e3.set_mode
+data:
+  device_id: <votre_device_id>
+  mode: "3"
+  power: 100  # Limite de puissance en watts
+  cd_time: 300  # Durée d'exécution en secondes (5 minutes)
+```
+
+**Passer en mode Passif avec durée personnalisée :**
+```yaml
+service: marstek_venus_e3.set_mode
+data:
+  device_id: <votre_device_id>
+  mode: "3"
+  power: 200  # Limite de puissance
+  cd_time: 1800  # Durée de 30 minutes (1800 secondes)
+```
+
 **Mode Manuel : Charge à 1000W de 08:30 à 20:30, tous les jours :**
 ```yaml
 service: marstek_venus_e3.set_mode
@@ -239,7 +338,7 @@ data:
     - friday
     - saturday
     - sunday
-  power: 1000  # Charge à 1000W
+  power: -1000  # Charge à 1000W (négatif)
   enable: 1
 ```
 
@@ -257,7 +356,7 @@ data:
     - wednesday
     - thursday
     - friday
-  power: -2000  # Décharge à 2000W (négatif)
+  power: 2000  # Décharge à 2000W (positif)
   enable: 1
 ```
 
@@ -272,7 +371,7 @@ data:
   days:
     - saturday
     - sunday
-  power: 1500
+  power: -1500  # Charge à 1500W (négatif)
   enable: 1
 ```
 
@@ -346,7 +445,7 @@ automation:
             - friday
             - saturday
             - sunday
-          power: 3000  # Charge maximale
+          power: -3000  # Charge maximale (négatif)
           enable: 1
 ```
 

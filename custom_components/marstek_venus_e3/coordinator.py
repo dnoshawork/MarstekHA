@@ -210,6 +210,8 @@ class MarstekVenusE3Coordinator(DataUpdateCoordinator):
         week_set: int = 127,
         power: int = 0,
         enable: int = 1,
+        time_num: int = 1,
+        cd_time: int | None = None,
     ) -> bool:
         """Set the ES mode of the battery.
 
@@ -219,8 +221,11 @@ class MarstekVenusE3Coordinator(DataUpdateCoordinator):
             end_time: End time for Manual mode (format "HH:MM")
             week_set: Days of week bitmap for Manual mode (0-127, default 127=all days)
                       bit 0=Monday, bit 1=Tuesday, ..., bit 6=Sunday
-            power: Power in watts for Manual mode (positive=charge, negative=discharge)
+            power: Power in watts for Manual mode (negative=charge, positive=discharge)
+                   or power limit for Passive mode
             enable: Enable flag for Manual mode (0=disabled, 1=enabled)
+            time_num: Time period serial number (0-9) for Manual mode
+            cd_time: Duration in seconds for Passive mode (cmd_time)
         """
         try:
             # For Manual mode (mode=2), we need to send manual_cfg
@@ -234,7 +239,7 @@ class MarstekVenusE3Coordinator(DataUpdateCoordinator):
                     "config": {
                         "mode": "Manual",
                         "manual_cfg": {
-                            "time_num": 1,
+                            "time_num": time_num,
                             "start_time": start_time,
                             "end_time": end_time,
                             "week_set": week_set,
@@ -243,8 +248,20 @@ class MarstekVenusE3Coordinator(DataUpdateCoordinator):
                         }
                     }
                 }
+            elif mode == 3:  # Passive mode
+                # For Passive mode, we need to send passive_cfg with power and cd_time
+                params = {
+                    "id": 0,
+                    "config": {
+                        "mode": "Passive",
+                        "passive_cfg": {
+                            "power": power,
+                            "cd_time": cd_time if cd_time is not None else 300,  # Default 300 seconds
+                        }
+                    }
+                }
             else:
-                # For Auto, AI, and Passive modes, just send the mode
+                # For Auto and AI modes, just send the mode
                 params = {
                     "id": 0,
                     "mode": mode,
