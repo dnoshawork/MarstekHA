@@ -153,20 +153,35 @@ class MarstekVenusE3Coordinator(DataUpdateCoordinator):
             """Send and receive UDP data (blocking operation)."""
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             try:
-                # Bind to local port to receive response
-                sock.bind(("", self.port))
+                # Bind to local port to receive response (same as Jeedom script)
+                # Use 0.0.0.0 to listen on all interfaces
+                sock.bind(("0.0.0.0", self.port))
                 sock.settimeout(timeout)
 
-                # Send request
-                message = json.dumps(request).encode("utf-8")
+                # Send request (use separators for compact JSON like Jeedom script)
+                message = json.dumps(request, separators=(",", ":")).encode("utf-8")
+                _LOGGER.debug("Sending UDP request to %s:%d: %s", self.ip_address, self.port, message.decode("utf-8"))
                 sock.sendto(message, (self.ip_address, self.port))
 
-                # Receive response
-                data, _ = sock.recvfrom(4096)
-                response = json.loads(data.decode("utf-8"))
+                # Receive response with better error handling
+                try:
+                    data, addr = sock.recvfrom(65535)
+                    _LOGGER.debug("Received UDP response from %s: %s", addr, data.decode("utf-8"))
+                    response = json.loads(data.decode("utf-8", errors="strict"))
+                    return response
+                except socket.timeout as err:
+                    _LOGGER.error("UDP socket timeout while waiting for response from %s:%d", self.ip_address, self.port)
+                    raise
+                except json.JSONDecodeError as err:
+                    _LOGGER.error("Failed to decode JSON response: %s", err)
+                    raise
+                except Exception as err:
+                    _LOGGER.error("Error receiving UDP response: %s", err)
+                    raise
 
-                return response
-
+            except OSError as err:
+                _LOGGER.error("UDP socket error (port %d may be in use): %s", self.port, err)
+                raise
             finally:
                 sock.close()
 

@@ -53,8 +53,11 @@ class MarstekVenusE3ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             try:
                 info = await validate_input(self.hass, user_input)
-            except Exception:  # pylint: disable=broad-except
-                _LOGGER.exception("Unexpected exception")
+            except Exception as err:  # pylint: disable=broad-except
+                _LOGGER.exception("Failed to connect to battery at %s:%s - Error: %s",
+                                user_input.get(CONF_IP_ADDRESS),
+                                user_input.get(CONF_PORT, DEFAULT_PORT),
+                                str(err))
                 errors["base"] = "cannot_connect"
             else:
                 await self.async_set_unique_id(user_input[CONF_IP_ADDRESS])
