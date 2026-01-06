@@ -195,7 +195,27 @@ Si vous rencontrez des problèmes, veuillez ouvrir une issue sur [GitHub](https:
 
 ## Licence
 
-Ce projet est sous licence MIT.
+Ce projet est sous licence **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)**.
+
+### Résumé de la licence
+
+✅ **Vous pouvez** :
+- Utiliser ce projet pour un usage **personnel et non-commercial**
+- Modifier et améliorer le code
+- Partager et redistribuer le projet
+
+❌ **Vous ne pouvez PAS** :
+- Utiliser ce projet à des **fins commerciales** sans autorisation écrite
+- Déposer des **brevets** basés sur ce travail (seul l'auteur original peut le faire)
+
+📋 **Obligations** :
+- Mentionner l'auteur original : **Damien NOBLET**
+- Indiquer les modifications effectuées
+- Partager vos modifications sous la **même licence**
+
+💼 **Usage commercial** : Pour toute utilisation commerciale, contactez **Damien NOBLET**
+
+📄 Licence complète : [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
 ## Crédits
 
