@@ -177,6 +177,8 @@ L'intégration permet de contrôler le mode de fonctionnement de la batterie via
 | **Manuel** | 2 | Contrôle manuel de la charge et décharge avec puissances définies |
 | **Passif** | 3 | Mode passif sans gestion active |
 
+⚠️ **Avertissement sur le mode Passif** : Selon la documentation constructeur, le mode Passif devrait rendre la batterie complètement inopérante (pas de charge ni de décharge, quel que soit le SOC). Cependant, dans la pratique, **ce mode ne semble pas fonctionner comme décrit**. La batterie peut continuer à charger ou décharger malgré l'activation de ce mode. Utilisez ce mode avec précaution et vérifiez le comportement réel de votre batterie.
+
 ### Service : Définir le mode
 
 #### Via l'interface Home Assistant
@@ -185,8 +187,23 @@ L'intégration permet de contrôler le mode de fonctionnement de la batterie via
 2. Sélectionnez le service `marstek_venus_e3.set_mode`
 3. Choisissez votre appareil
 4. Sélectionnez le mode souhaité
-5. Pour le mode Manuel : définissez les puissances de charge et décharge
+5. Pour le mode Manuel : définissez les plages horaires, la puissance et les jours actifs
 6. Cliquez sur **Appeler le service**
+
+#### Paramètres du mode Manuel
+
+Le mode Manuel utilise des plages horaires gérées **directement par la batterie** :
+
+- **start_time** : Heure de début (format "HH:MM", obligatoire)
+- **end_time** : Heure de fin (format "HH:MM", obligatoire)
+- **days** : Jours actifs (liste)
+  - Sélectionnez un ou plusieurs jours : `monday`, `tuesday`, `wednesday`, `thursday`, `friday`, `saturday`, `sunday`
+  - Valeur par défaut : `monday` à `friday` (jours de semaine)
+  - Alternative obsolète : `week_set` (bitmap 0-127) - conservé pour compatibilité
+- **power** : Puissance en watts
+  - Valeur positive = charge
+  - Valeur négative = décharge
+- **enable** : Activer la plage (1 = activé, 0 = désactivé)
 
 #### Exemples YAML
 
@@ -198,48 +215,99 @@ data:
   mode: "0"
 ```
 
-**Passer en mode Manuel avec charge à 1000W :**
+**Passer en mode AI :**
+```yaml
+service: marstek_venus_e3.set_mode
+data:
+  device_id: <votre_device_id>
+  mode: "1"
+```
+
+**Mode Manuel : Charge à 1000W de 08:30 à 20:30, tous les jours :**
 ```yaml
 service: marstek_venus_e3.set_mode
 data:
   device_id: <votre_device_id>
   mode: "2"
-  charge_power: 1000
-  discharge_power: 0
+  start_time: "08:30"
+  end_time: "20:30"
+  days:
+    - monday
+    - tuesday
+    - wednesday
+    - thursday
+    - friday
+    - saturday
+    - sunday
+  power: 1000  # Charge à 1000W
+  enable: 1
 ```
 
-**Passer en mode Manuel avec décharge à 500W :**
+**Mode Manuel : Décharge à 2000W de 17:00 à 22:00, du lundi au vendredi :**
 ```yaml
 service: marstek_venus_e3.set_mode
 data:
   device_id: <votre_device_id>
   mode: "2"
-  charge_power: 0
-  discharge_power: 500
+  start_time: "17:00"
+  end_time: "22:00"
+  days:
+    - monday
+    - tuesday
+    - wednesday
+    - thursday
+    - friday
+  power: -2000  # Décharge à 2000W (négatif)
+  enable: 1
 ```
 
-### Automatisation : Passer en mode Manuel pendant les heures pleines
+**Mode Manuel : Charge uniquement le week-end :**
+```yaml
+service: marstek_venus_e3.set_mode
+data:
+  device_id: <votre_device_id>
+  mode: "2"
+  start_time: "09:00"
+  end_time: "18:00"
+  days:
+    - saturday
+    - sunday
+  power: 1500
+  enable: 1
+```
+
+### Automatisation : Décharge pendant heures pleines (lun-ven)
+
+⚠️ **Important** : En mode Manuel, la batterie gère elle-même les plages horaires. Vous n'avez besoin de définir le mode qu'**une seule fois**, pas à chaque déclenchement.
 
 ```yaml
 automation:
-  - alias: "Batterie - Mode Manuel heures pleines"
+  - alias: "Batterie - Configuration heures pleines"
     trigger:
-      - platform: time
-        at: "17:00:00"
+      - platform: homeassistant
+        event: start  # S'exécute au démarrage de Home Assistant
     action:
       - service: marstek_venus_e3.set_mode
         data:
           device_id: <votre_device_id>
           mode: "2"
-          discharge_power: 2000
-          charge_power: 0
+          start_time: "17:00"
+          end_time: "22:00"
+          days:
+            - monday
+            - tuesday
+            - wednesday
+            - thursday
+            - friday
+          power: -2000  # Décharge
+          enable: 1
 ```
 
-### Automatisation : Revenir en mode Auto pendant les heures creuses
+### Automatisation : Revenir en mode Auto
 
 ```yaml
 automation:
-  - alias: "Batterie - Mode Auto heures creuses"
+  - alias: "Batterie - Revenir en mode Auto"
     trigger:
       - platform: time
         at: "22:00:00"
@@ -259,13 +327,27 @@ automation:
       - platform: numeric_state
         entity_id: sensor.marstek_venus_e_3_0_state_of_charge
         below: 20
+    condition:
+      - condition: state
+        entity_id: sensor.marstek_venus_e_3_0_es_mode
+        state: "Auto"  # Ne change que si en mode Auto
     action:
       - service: marstek_venus_e3.set_mode
         data:
           device_id: <votre_device_id>
           mode: "2"
-          charge_power: 3000
-          discharge_power: 0
+          start_time: "00:00"
+          end_time: "23:59"
+          days:
+            - monday
+            - tuesday
+            - wednesday
+            - thursday
+            - friday
+            - saturday
+            - sunday
+          power: 3000  # Charge maximale
+          enable: 1
 ```
 
 ### Trouver le device_id

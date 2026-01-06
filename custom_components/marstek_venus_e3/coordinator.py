@@ -205,17 +205,50 @@ class MarstekVenusE3Coordinator(DataUpdateCoordinator):
     async def async_set_mode(
         self,
         mode: int,
-        charge_power: int = 0,
-        discharge_power: int = 0,
+        start_time: str | None = None,
+        end_time: str | None = None,
+        week_set: int = 127,
+        power: int = 0,
+        enable: int = 1,
     ) -> bool:
-        """Set the ES mode of the battery."""
+        """Set the ES mode of the battery.
+
+        Args:
+            mode: Operating mode (0=Auto, 1=AI, 2=Manual, 3=Passive)
+            start_time: Start time for Manual mode (format "HH:MM")
+            end_time: End time for Manual mode (format "HH:MM")
+            week_set: Days of week bitmap for Manual mode (0-127, default 127=all days)
+                      bit 0=Monday, bit 1=Tuesday, ..., bit 6=Sunday
+            power: Power in watts for Manual mode (positive=charge, negative=discharge)
+            enable: Enable flag for Manual mode (0=disabled, 1=enabled)
+        """
         try:
-            params = {
-                "id": 0,
-                "mode": mode,
-                "chargePower": charge_power,
-                "dischargePower": discharge_power,
-            }
+            # For Manual mode (mode=2), we need to send manual_cfg
+            if mode == 2:
+                if start_time is None or end_time is None:
+                    _LOGGER.error("Manual mode requires start_time and end_time")
+                    return False
+
+                params = {
+                    "id": 0,
+                    "config": {
+                        "mode": "Manual",
+                        "manual_cfg": {
+                            "time_num": 1,
+                            "start_time": start_time,
+                            "end_time": end_time,
+                            "week_set": week_set,
+                            "power": power,
+                            "enable": enable,
+                        }
+                    }
+                }
+            else:
+                # For Auto, AI, and Passive modes, just send the mode
+                params = {
+                    "id": 0,
+                    "mode": mode,
+                }
 
             response = await self._execute_command_with_retry(
                 "ES.SetMode",

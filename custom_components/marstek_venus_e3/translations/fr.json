@@ -51,13 +51,29 @@
           "name": "Mode",
           "description": "Mode de fonctionnement : 0=Auto, 1=IA, 2=Manuel, 3=Passif"
         },
-        "charge_power": {
-          "name": "Puissance de charge",
-          "description": "Puissance de charge en watts (mode Manuel uniquement)"
+        "start_time": {
+          "name": "Heure de début",
+          "description": "Heure de début pour la plage horaire du mode Manuel (format HH:MM, obligatoire pour le mode Manuel)"
         },
-        "discharge_power": {
-          "name": "Puissance de décharge",
-          "description": "Puissance de décharge en watts (mode Manuel uniquement)"
+        "end_time": {
+          "name": "Heure de fin",
+          "description": "Heure de fin pour la plage horaire du mode Manuel (format HH:MM, obligatoire pour le mode Manuel)"
+        },
+        "days": {
+          "name": "Jours de la semaine",
+          "description": "Sélectionnez les jours où la plage horaire est active (pour le mode Manuel)"
+        },
+        "week_set": {
+          "name": "Jours de la semaine (obsolète)",
+          "description": "[OBSOLÈTE - Utilisez 'days' à la place] Bitmap des jours (0-127 : bit 0=Lundi, bit 1=Mardi, ..., bit 6=Dimanche, 127=tous les jours)"
+        },
+        "power": {
+          "name": "Puissance",
+          "description": "Puissance en watts pour le mode Manuel (positif=charge, négatif=décharge)"
+        },
+        "enable": {
+          "name": "Activer",
+          "description": "Activer la plage horaire du mode Manuel (1=activé, 0=désactivé)"
         }
       }
     }

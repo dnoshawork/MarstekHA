@@ -24,25 +24,76 @@ set_mode:
               value: "2"
             - label: "Passive"
               value: "3"
-    charge_power:
-      name: Charge Power
-      description: Charge power in watts (for Manual mode)
+    start_time:
+      name: Start Time
+      description: Start time for Manual mode (format HH:MM, required for Manual mode)
+      required: false
+      selector:
+        time:
+    end_time:
+      name: End Time
+      description: End time for Manual mode (format HH:MM, required for Manual mode)
+      required: false
+      selector:
+        time:
+    days:
+      name: Days of Week
+      description: Select the days when the schedule is active (for Manual mode)
+      required: false
+      default:
+        - monday
+        - tuesday
+        - wednesday
+        - thursday
+        - friday
+      selector:
+        select:
+          multiple: true
+          options:
+            - label: "Monday"
+              value: "monday"
+            - label: "Tuesday"
+              value: "tuesday"
+            - label: "Wednesday"
+              value: "wednesday"
+            - label: "Thursday"
+              value: "thursday"
+            - label: "Friday"
+              value: "friday"
+            - label: "Saturday"
+              value: "saturday"
+            - label: "Sunday"
+              value: "sunday"
+    week_set:
+      name: Days of Week (deprecated)
+      description: "[DEPRECATED - Use 'days' instead] Days bitmap (0-127)"
+      required: false
+      default: 127
+      selector:
+        number:
+          min: 0
+          max: 127
+          step: 1
+          mode: box
+    power:
+      name: Power
+      description: Power in watts for Manual mode (positive=charge, negative=discharge)
       required: false
       default: 0
       selector:
         number:
-          min: 0
+          min: -3000
           max: 3000
           step: 100
           unit_of_measurement: "W"
-    discharge_power:
-      name: Discharge Power
-      description: Discharge power in watts (for Manual mode)
+    enable:
+      name: Enable
+      description: Enable the Manual mode schedule (1=enabled, 0=disabled)
       required: false
-      default: 0
+      default: 1
       selector:
         number:
           min: 0
-          max: 3000
-          step: 100
-          unit_of_measurement: "W"
+          max: 1
+          step: 1
+          mode: box

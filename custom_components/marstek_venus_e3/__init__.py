@@ -14,13 +14,46 @@ _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: list[Platform] = [Platform.SENSOR]
 
+# Days of week mapping for conversion
+WEEKDAY_TO_BIT = {
+    "monday": 0,
+    "tuesday": 1,
+    "wednesday": 2,
+    "thursday": 3,
+    "friday": 4,
+    "saturday": 5,
+    "sunday": 6,
+}
+
+
+def convert_days_to_bitmap(days: list[str]) -> int:
+    """Convert list of day names to bitmap.
+
+    Args:
+        days: List of day names (e.g., ["monday", "friday"])
+
+    Returns:
+        Bitmap integer (0-127)
+    """
+    bitmap = 0
+    for day in days:
+        day_lower = day.lower()
+        if day_lower in WEEKDAY_TO_BIT:
+            bitmap |= (1 << WEEKDAY_TO_BIT[day_lower])
+    return bitmap
+
+
 # Service schema
 SERVICE_SET_MODE_SCHEMA = vol.Schema(
     {
         vol.Required("device_id"): str,
         vol.Required("mode"): vol.In(["0", "1", "2", "3"]),
-        vol.Optional("charge_power", default=0): vol.All(int, vol.Range(min=0, max=3000)),
-        vol.Optional("discharge_power", default=0): vol.All(int, vol.Range(min=0, max=3000)),
+        vol.Optional("start_time"): str,
+        vol.Optional("end_time"): str,
+        vol.Optional("days"): [str],
+        vol.Optional("week_set", default=127): vol.All(int, vol.Range(min=0, max=127)),
+        vol.Optional("power", default=0): vol.All(int, vol.Range(min=-3000, max=3000)),
+        vol.Optional("enable", default=1): vol.All(int, vol.Range(min=0, max=1)),
     }
 )
 
@@ -65,8 +98,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         """Handle the set_mode service call."""
         device_id = call.data["device_id"]
         mode = int(call.data["mode"])
-        charge_power = call.data.get("charge_power", 0)
-        discharge_power = call.data.get("discharge_power", 0)
+        start_time = call.data.get("start_time")
+        end_time = call.data.get("end_time")
+
+        # Support 'days' field (priority) or 'week_set' (backward compatibility)
+        days = call.data.get("days")
+        if days:
+            week_set = convert_days_to_bitmap(days)
+            _LOGGER.debug("Converted days %s to bitmap %d", days, week_set)
+        else:
+            week_set = call.data.get("week_set", 127)
+            _LOGGER.debug("Using legacy week_set bitmap: %d", week_set)
+
+        power = call.data.get("power", 0)
+        enable = call.data.get("enable", 1)
 
         # Find the coordinator for this device
         device_registry = dr.async_get(hass)
@@ -90,7 +135,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         coordinator = hass.data[DOMAIN][coordinator_entry_id]
 
         # Call the set_mode method
-        success = await coordinator.async_set_mode(mode, charge_power, discharge_power)
+        success = await coordinator.async_set_mode(
+            mode=mode,
+            start_time=start_time,
+            end_time=end_time,
+            week_set=week_set,
+            power=power,
+            enable=enable,
+        )
 
         if success:
             _LOGGER.info("Successfully set mode to %s", mode)

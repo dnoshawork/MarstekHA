@@ -19,7 +19,10 @@ Intégration Home Assistant pour la batterie Marstek Venus E 3.0.
 - Mécanisme de retry automatique avec backoff exponentiel pour garantir la fiabilité
 - Configuration simple via l'interface utilisateur avec validation
 - Port et intervalle de mise à jour configurables
+- Contrôle du mode de fonctionnement (Auto, AI, Manuel, Passif)
 - Support multilingue (EN/FR)
+
+⚠️ **Note** : Le mode Passif ne fonctionne pas comme décrit dans la documentation constructeur. Consultez le README pour plus de détails.
 
 ## Capteurs disponibles
 

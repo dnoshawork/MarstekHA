@@ -51,13 +51,29 @@
           "name": "Mode",
           "description": "Operating mode: 0=Auto, 1=AI, 2=Manual, 3=Passive"
         },
-        "charge_power": {
-          "name": "Charge Power",
-          "description": "Charge power in watts (for Manual mode only)"
+        "start_time": {
+          "name": "Start Time",
+          "description": "Start time for Manual mode schedule (format HH:MM, required for Manual mode)"
         },
-        "discharge_power": {
-          "name": "Discharge Power",
-          "description": "Discharge power in watts (for Manual mode only)"
+        "end_time": {
+          "name": "End Time",
+          "description": "End time for Manual mode schedule (format HH:MM, required for Manual mode)"
+        },
+        "days": {
+          "name": "Days of Week",
+          "description": "Select the days when the schedule is active (for Manual mode)"
+        },
+        "week_set": {
+          "name": "Days of Week (deprecated)",
+          "description": "[DEPRECATED - Use 'days' instead] Days bitmap (0-127: bit 0=Monday, bit 1=Tuesday, ..., bit 6=Sunday, 127=all days)"
+        },
+        "power": {
+          "name": "Power",
+          "description": "Power in watts for Manual mode (positive=charge, negative=discharge)"
+        },
+        "enable": {
+          "name": "Enable",
+          "description": "Enable the Manual mode schedule (1=enabled, 0=disabled)"
         }
       }
     }
