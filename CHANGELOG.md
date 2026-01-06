@@ -10,59 +10,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.1] - 2026-01-06
 
 ### Added
-
-### Changed
-
-### Fixed
-
-### Removed
-
-
-## [1.1.0] - 2026-01-06
-
-### Fixed
-- Fixed UDP socket binding issue: changed from `("", port)` to `("0.0.0.0", port)` to properly listen on all network interfaces
-- UDP buffer size increased from 4096 to 65535 bytes for better compatibility
-- Improved error handling with specific error messages for different failure scenarios
-
-### Changed
-- Improved logging throughout the integration:
-  - Added debug logs for UDP requests and responses
-  - Enhanced error messages in config flow to show IP, port, and specific error details
-  - Added detailed error logging for socket timeouts, JSON decode errors, and OSError
-- Aligned JSON formatting with Jeedom reference script (compact separators)
-
-### Added
-- Comprehensive changelog for version tracking
-- VERSION file for easier version management
-- Better documentation of UDP communication errors
-
-## [1.0.0] - 2026-01-05
-
-### Added
-- Initial release of Marstek Venus E 3.0 Home Assistant integration
+- Initial development release of Marstek Venus E 3.0 Home Assistant integration
 - UDP communication with battery on port 30000
 - Support for multiple operating modes (Auto, AI, Manual, Passive)
 - Real-time monitoring of battery parameters:
   - State of Charge (SOC)
-  - Temperature
-  - Voltage and Current
+  - Battery Temperature
+  - Battery Voltage and Current
   - Battery Power
-  - Grid Power
+  - Grid Power (OnGrid Power)
   - Load Power
-  - PV Power
-  - Charge/Discharge Power
+  - PV Power (Solar)
+  - Charge Power
+  - Discharge Power
 - Config flow for easy setup via UI
-- Automatic retry mechanism with exponential backoff
-- Support for multiple time slots in Manual mode
-- Services to control battery modes:
-  - `set_battery_mode_auto`
-  - `set_battery_mode_ai`
-  - `set_battery_mode_manual`
-  - `set_battery_mode_passive`
-- HACS integration support
+- Automatic retry mechanism with exponential backoff (inspired by Jeedom script)
+- Support for multiple time slots in Manual mode (up to 10 time periods)
+- Services to control battery modes
+- HACS integration support with one-click install button
+- Comprehensive documentation with examples
+- Version management system with bump_version.py script
+- CHANGELOG following Keep a Changelog format
+
+### Fixed
+- UDP socket binding: using `("0.0.0.0", port)` to properly listen on all network interfaces
+- UDP buffer size set to 65535 bytes for better compatibility with battery responses
+- Improved error handling with specific error messages for different failure scenarios
+
+### Changed
+- Enhanced logging throughout the integration:
+  - Debug logs for UDP requests and responses
+  - Detailed error messages in config flow showing IP, port, and specific errors
+  - Comprehensive error logging for socket timeouts, JSON decode errors, and OSError
+- JSON formatting aligned with Jeedom reference script (compact separators)
+
+### Notes
+- ⚠️ This is a development version. The integration is functional but may require further testing and refinement
+- Based on the [Jeedom script](https://github.com/dnoshawork/MarstekVenusE3.0_For_Jeedom/blob/main/marstek_udp_client_all_v3.py)
 
 [Unreleased]: https://github.com/dnoshawork/MarstekHA/compare/v0.0.1...HEAD
-[0.0.1]: https://github.com/dnoshawork/MarstekHA/compare/v1.1.0...v0.0.1
-[1.1.0]: https://github.com/dnoshawork/MarstekHA/compare/v1.0.0...v1.1.0
-[1.0.0]: https://github.com/dnoshawork/MarstekHA/releases/tag/v1.0.0
+[0.0.1]: https://github.com/dnoshawork/MarstekHA/releases/tag/v0.0.1

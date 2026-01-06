@@ -1,7 +1,7 @@
 # Marstek Venus E 3.0 - Home Assistant Integration
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
-[![version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/dnoshawork/MarstekHA/releases)
+[![version](https://img.shields.io/badge/version-0.0.1--dev-orange.svg)](https://github.com/dnoshawork/MarstekHA/releases)
 [![license](https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
 Intégration Home Assistant pour la batterie Marstek Venus E 3.0.
@@ -37,6 +37,14 @@ L'intégration expose les capteurs suivants :
 ## Installation
 
 ### Via HACS (Recommandé)
+
+#### Installation en un clic
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=dnoshawork&repository=MarstekHA&category=integration)
+
+Cliquez sur le bouton ci-dessus pour ouvrir directement le dépôt dans HACS, puis cliquez sur "Télécharger".
+
+#### Installation manuelle via HACS
 
 1. Assurez-vous que [HACS](https://hacs.xyz/) est installé
 2. Dans HACS, cliquez sur "Intégrations"
