@@ -15,8 +15,6 @@ from .const import (
     DEFAULT_TIMEOUT,
     DEFAULT_MAX_RETRIES,
     CMD_GET_MODE,
-    CMD_GET_BAT_STATUS,
-    ES_MODES,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -47,14 +45,11 @@ class MarstekVenusE3Coordinator(DataUpdateCoordinator):
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch data from the battery."""
         try:
-            # Get ES Mode data
+            # Get ES Mode data (contains all necessary information)
             es_mode_data = await self._execute_command_with_retry(CMD_GET_MODE)
 
-            # Get Battery Status data
-            bat_status_data = await self._execute_command_with_retry(CMD_GET_BAT_STATUS)
-
-            # Combine and parse the data
-            data = self._parse_data(es_mode_data, bat_status_data)
+            # Parse the data
+            data = self._parse_data(es_mode_data)
 
             return data
 
@@ -153,10 +148,14 @@ class MarstekVenusE3Coordinator(DataUpdateCoordinator):
             """Send and receive UDP data (blocking operation)."""
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             try:
-                # Bind to local port to receive response (same as Jeedom script)
-                # Use 0.0.0.0 to listen on all interfaces
-                sock.bind(("0.0.0.0", self.port))
+                # Bind to an ephemeral port (0 = let OS choose a free port)
+                # This avoids conflicts if port 30000 is already in use locally
+                sock.bind(("0.0.0.0", 0))
                 sock.settimeout(timeout)
+
+                # Get the actual port assigned by the OS
+                local_port = sock.getsockname()[1]
+                _LOGGER.debug("Bound to local port %d for receiving responses", local_port)
 
                 # Send request (use separators for compact JSON like Jeedom script)
                 message = json.dumps(request, separators=(",", ":")).encode("utf-8")
@@ -191,29 +190,65 @@ class MarstekVenusE3Coordinator(DataUpdateCoordinator):
     def _parse_data(
         self,
         es_mode_data: dict[str, Any],
-        bat_status_data: dict[str, Any],
     ) -> dict[str, Any]:
-        """Parse the response data into sensor values."""
+        """Parse the response data into sensor values.
+
+        The battery returns all data in ES.GetMode response with this format:
+        {
+            "id": 1,
+            "src": "VenusE 3.0-009b08a5e322",
+            "result": {
+                "id": 0,
+                "mode": "Auto",  # String: "Auto", "AI", "Manual", "Passive"
+                "ongrid_power": 437,
+                "offgrid_power": 0,
+                "bat_soc": 81,  # State of Charge in %
+                "ct_state": 0,
+                "a_power": 0,
+                "b_power": 0,
+                "c_power": 0,
+                "total_power": 0,
+                "input_energy": 0,
+                "output_energy": 0
+            }
+        }
+        """
         data = {}
 
-        # Parse ES Mode data
         if "result" in es_mode_data:
             result = es_mode_data["result"]
-            data["es_mode"] = ES_MODES.get(result.get("mode", 0), "Unknown")
-            data["ongrid_power"] = result.get("ongridPower", 0)
-            data["load_power"] = result.get("loadPower", 0)
-            data["pv_power"] = result.get("pvPower", 0)
-            data["charge_power"] = result.get("chargePower", 0)
-            data["discharge_power"] = result.get("dischargePower", 0)
 
-        # Parse Battery Status data
-        if "result" in bat_status_data:
-            result = bat_status_data["result"]
-            data["soc"] = result.get("soc", 0)
-            data["bat_temp"] = result.get("temp", 0)
-            data["bat_voltage"] = result.get("voltage", 0) / 100  # Convert to V
-            data["bat_current"] = result.get("current", 0) / 100  # Convert to A
-            data["bat_power"] = result.get("power", 0)
+            # Mode (string format: "Auto", "AI", "Manual", "Passive")
+            mode_str = result.get("mode", "Unknown")
+            data["es_mode"] = mode_str
+
+            # Battery data
+            data["soc"] = result.get("bat_soc", 0)
+
+            # Power data
+            data["ongrid_power"] = result.get("ongrid_power", 0)
+            data["offgrid_power"] = result.get("offgrid_power", 0)
+
+            # Phase powers
+            data["a_power"] = result.get("a_power", 0)
+            data["b_power"] = result.get("b_power", 0)
+            data["c_power"] = result.get("c_power", 0)
+            data["total_power"] = result.get("total_power", 0)
+
+            # Energy counters
+            data["input_energy"] = result.get("input_energy", 0)
+            data["output_energy"] = result.get("output_energy", 0)
+
+            # Note: Temperature, voltage, current not available in this response
+            # These would require additional commands if needed
+            data["bat_temp"] = None
+            data["bat_voltage"] = None
+            data["bat_current"] = None
+            data["bat_power"] = None
+            data["load_power"] = None
+            data["pv_power"] = None
+            data["charge_power"] = None
+            data["discharge_power"] = None
 
         return data
 
