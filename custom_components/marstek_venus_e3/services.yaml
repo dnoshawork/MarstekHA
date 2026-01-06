@@ -1,0 +1,48 @@
+set_mode:
+  name: Set operating mode
+  description: Change the operating mode of the Marstek Venus E 3.0 battery
+  fields:
+    device_id:
+      name: Device
+      description: The Marstek Venus E 3.0 device to control
+      required: true
+      selector:
+        device:
+          integration: marstek_venus_e3
+    mode:
+      name: Mode
+      description: Operating mode to set
+      required: true
+      selector:
+        select:
+          options:
+            - label: "Auto"
+              value: "0"
+            - label: "AI"
+              value: "1"
+            - label: "Manual"
+              value: "2"
+            - label: "Passive"
+              value: "3"
+    charge_power:
+      name: Charge Power
+      description: Charge power in watts (for Manual mode)
+      required: false
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 3000
+          step: 100
+          unit_of_measurement: "W"
+    discharge_power:
+      name: Discharge Power
+      description: Discharge power in watts (for Manual mode)
+      required: false
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 3000
+          step: 100
+          unit_of_measurement: "W"

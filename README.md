@@ -164,6 +164,124 @@ automation:
           message: "La batterie Marstek est à {{ states('sensor.marstek_venus_e_3_0_battery_temperature') }}°C"
 ```
 
+## Contrôle du mode de fonctionnement
+
+L'intégration permet de contrôler le mode de fonctionnement de la batterie via le service `marstek_venus_e3.set_mode`.
+
+### Modes disponibles
+
+| Mode | Valeur | Description |
+|------|--------|-------------|
+| **Auto** | 0 | La batterie gère automatiquement la charge et la décharge |
+| **AI** | 1 | Mode intelligent avec optimisation |
+| **Manuel** | 2 | Contrôle manuel de la charge et décharge avec puissances définies |
+| **Passif** | 3 | Mode passif sans gestion active |
+
+### Service : Définir le mode
+
+#### Via l'interface Home Assistant
+
+1. Allez dans **Outils de développement** → **Services**
+2. Sélectionnez le service `marstek_venus_e3.set_mode`
+3. Choisissez votre appareil
+4. Sélectionnez le mode souhaité
+5. Pour le mode Manuel : définissez les puissances de charge et décharge
+6. Cliquez sur **Appeler le service**
+
+#### Exemples YAML
+
+**Passer en mode Auto :**
+```yaml
+service: marstek_venus_e3.set_mode
+data:
+  device_id: <votre_device_id>
+  mode: "0"
+```
+
+**Passer en mode Manuel avec charge à 1000W :**
+```yaml
+service: marstek_venus_e3.set_mode
+data:
+  device_id: <votre_device_id>
+  mode: "2"
+  charge_power: 1000
+  discharge_power: 0
+```
+
+**Passer en mode Manuel avec décharge à 500W :**
+```yaml
+service: marstek_venus_e3.set_mode
+data:
+  device_id: <votre_device_id>
+  mode: "2"
+  charge_power: 0
+  discharge_power: 500
+```
+
+### Automatisation : Passer en mode Manuel pendant les heures pleines
+
+```yaml
+automation:
+  - alias: "Batterie - Mode Manuel heures pleines"
+    trigger:
+      - platform: time
+        at: "17:00:00"
+    action:
+      - service: marstek_venus_e3.set_mode
+        data:
+          device_id: <votre_device_id>
+          mode: "2"
+          discharge_power: 2000
+          charge_power: 0
+```
+
+### Automatisation : Revenir en mode Auto pendant les heures creuses
+
+```yaml
+automation:
+  - alias: "Batterie - Mode Auto heures creuses"
+    trigger:
+      - platform: time
+        at: "22:00:00"
+    action:
+      - service: marstek_venus_e3.set_mode
+        data:
+          device_id: <votre_device_id>
+          mode: "0"
+```
+
+### Automatisation : Charge forcée si SOC < 20%
+
+```yaml
+automation:
+  - alias: "Batterie - Charge forcée si faible"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.marstek_venus_e_3_0_state_of_charge
+        below: 20
+    action:
+      - service: marstek_venus_e3.set_mode
+        data:
+          device_id: <votre_device_id>
+          mode: "2"
+          charge_power: 3000
+          discharge_power: 0
+```
+
+### Trouver le device_id
+
+Pour trouver le `device_id` de votre batterie :
+
+1. Allez dans **Paramètres** → **Appareils et services**
+2. Cliquez sur votre appareil Marstek Venus E 3.0
+3. Cliquez sur les trois points en haut à droite → **Télécharger les diagnostics**
+4. Le `device_id` est visible dans les informations de l'appareil
+
+Ou utilisez ce template dans **Outils de développement** → **Modèle** :
+```yaml
+{{ device_id('Marstek Venus E 3.0') }}
+```
+
 ## Dépannage
 
 ### La batterie n'est pas détectée
