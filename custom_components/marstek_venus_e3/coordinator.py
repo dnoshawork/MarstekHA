@@ -239,17 +239,6 @@ class MarstekVenusE3Coordinator(DataUpdateCoordinator):
             data["input_energy"] = result.get("input_energy", 0)
             data["output_energy"] = result.get("output_energy", 0)
 
-            # Note: Temperature, voltage, current not available in this response
-            # These would require additional commands if needed
-            data["bat_temp"] = None
-            data["bat_voltage"] = None
-            data["bat_current"] = None
-            data["bat_power"] = None
-            data["load_power"] = None
-            data["pv_power"] = None
-            data["charge_power"] = None
-            data["discharge_power"] = None
-
         return data
 
     async def async_set_mode(
